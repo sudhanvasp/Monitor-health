@@ -27,8 +27,6 @@ int8_t validHeartRate; //indicator to show if the heart rate calculation is vali
 byte pulseLED = 11; //Must be on PWM pin
 byte readLED = 13; //Blinks with each data read
 
-byte pulseLED = 11; //Must be on PWM pin
-byte readLED = 13; //Blinks with each data read
 // last time SSE
 long last_sse = 0;
 void setup()
