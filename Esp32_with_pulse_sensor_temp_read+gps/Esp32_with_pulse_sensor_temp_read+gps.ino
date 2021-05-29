@@ -1,6 +1,5 @@
 
-#include <TinyGPS++.h> 
-#include <SoftwareSerial.h>
+
 #include <Wire.h>
 #include "MAX30105.h"
 #include "spo2_algorithm.h"
@@ -12,12 +11,6 @@ MAX30105 particleSensor;
 const char *SSID = "your_wifi_ssid";
 const char *PWD = "wifi_pwd";
 
-
-static const int RXPin = 16, TXPin = 17; //pins 16 and 17 
-static const uint32_t GPSBaud = 4800;
-TinyGPSPlus gps;
-
-SoftwareSerial ss(RXPin, TXPin);
 uint32_t irBuffer[100]; //infrared LED sensor data
 uint32_t redBuffer[100];  //red LED sensor data
 
@@ -31,13 +24,14 @@ int8_t validHeartRate; //indicator to show if the heart rate calculation is vali
 byte pulseLED = 11; //Must be on PWM pin
 byte readLED = 13; //Blinks with each data read
 
+byte pulseLED = 11; //Must be on PWM pin
+byte readLED = 13; //Blinks with each data read
 // last time SSE
 long last_sse = 0;
 void setup()
 {
   Serial.begin(115200); // initialize serial communication at 115200 bits per second:
 
-  ss.begin(GPSBaud);
   pinMode(pulseLED, OUTPUT);
   pinMode(readLED, OUTPUT);
 
@@ -48,8 +42,9 @@ void setup()
     while (1);
   }
   particleSensor.enableDIETEMPRDY();
-  Serial.println(F("Attach sensor to finger with rubber band. "));
+  Serial.println(F("Attach sensor to finger with rubber band. Press any key to start conversion"));
 
+  while (Serial.available() == 0) ; //wait until user presses a key
   Serial.read();
 
   byte ledBrightness = 60; //Options: 0=Off to 255=50mA
@@ -63,20 +58,7 @@ void setup()
 }
 
 void loop()
-{ {
-  // This sketch displays information every time a new sentence is correctly encoded.
-  while (ss.available() > 0)
-    if (gps.encode(ss.read()))
-      displayInfo();
-
-  if (millis() > 5000 && gps.charsProcessed() < 10)
-  {
-    Serial.println(F("No GPS detected: check wiring."));
-    while(true);
-  }
-}
-
-  float temperature = particleSensor.readTemperature();
+{ float temperature = particleSensor.readTemperature();
   Serial.print("temperatureC=");
   Serial.print(temperature, 4);
   bufferLength = 100; //buffer length of 100 stores 4 seconds of samples running at 25sps
@@ -144,55 +126,4 @@ void loop()
     //After gathering 25 new samples recalculate HR and SP02
     maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
   }
-}
-
-void displayInfo()
-{
-  Serial.print(F("Location: ")); 
-  if (gps.location.isValid())
-  {
-    Serial.print(gps.location.lat(), 6);
-    Serial.print(F(","));
-    Serial.print(gps.location.lng(), 6);
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.print(F("  Date/Time: "));
-  if (gps.date.isValid())
-  {
-    Serial.print(gps.date.month());
-    Serial.print(F("/"));
-    Serial.print(gps.date.day());
-    Serial.print(F("/"));
-    Serial.print(gps.date.year());
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.print(F(" "));
-  if (gps.time.isValid())
-  {
-    if (gps.time.hour() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.hour());
-    Serial.print(F(":"));
-    if (gps.time.minute() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.minute());
-    Serial.print(F(":"));
-    if (gps.time.second() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.second());
-    Serial.print(F("."));
-    if (gps.time.centisecond() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.centisecond());
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.println();
 }
